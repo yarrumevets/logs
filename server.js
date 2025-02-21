@@ -1,5 +1,5 @@
 import express from "express";
-import { createLog, getLogs } from "./db";
+import { createLog, getLogs } from "./db.js";
 
 // Server Stuff
 const app = express();
