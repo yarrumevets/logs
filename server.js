@@ -11,7 +11,7 @@ app.use(express.static("public"));
 app.use(express.json());
 
 app.use((req, res) => {
-  console.log({
+  const logObject = {
     ip:
       req.headers["x-real-ip"] ||
       req.headers["x-forwarded-for"] ||
@@ -19,8 +19,11 @@ app.use((req, res) => {
     host: req.headers.host,
     path: req.headers["x-original-uri"] || req.url,
     method: req.method,
-    headers: req.headers,
-  });
+    userAgent: req.headers["user-agent"],
+    referer: req.headers.referer,
+  };
+  if (req.body) logObject.body = req.body;
+  console.log(logObject);
   res.sendStatus(200);
 });
 
