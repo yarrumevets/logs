@@ -23,6 +23,9 @@ app.use((req, res) => {
     referer: req.headers.referer,
   };
   if (req.body) logObject.body = req.body;
+
+  createLog(logObject);
+
   console.log(logObject);
   res.sendStatus(200);
 });
