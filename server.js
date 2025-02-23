@@ -13,8 +13,8 @@ app.use(express.json());
 app.use(async (req, res, next) => {
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
   ipinfo(ip, (error, cLoc) => {
-    console.log("LOCATION -- cLoc: ", cLoc, " error: ", error);
     if (error) {
+      console.error("LOGS ERROR (ipinfo): ", error);
       return next(); // Fail silently or handle error appropriately
     }
     const locationData = { ...cLoc };
@@ -27,6 +27,7 @@ app.use(async (req, res, next) => {
         lat,
         lng,
       };
+      delete locationData.loc;
     }
     req.locationData = locationData;
     next();
@@ -47,6 +48,9 @@ app.use((req, res) => {
   createLog(logObject);
 
   console.log("\n" + logObject);
+
+  console.log(`${country} , ${region} , ${city} , ${host} , ${path} `);
+
   res.sendStatus(200);
 });
 
