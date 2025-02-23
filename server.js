@@ -45,8 +45,6 @@ app.use((req, res) => {
   };
   if (req.body) logObject.body = req.body;
 
-  createLog(logObject);
-
   console.log(
     `${logObject.country} , ${logObject.region} , ${logObject.city} , ${logObject.host} , ${logObject.path} `
   );
