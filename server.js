@@ -47,9 +47,9 @@ app.use((req, res) => {
 
   createLog(logObject);
 
-  console.log("\n" + logObject);
-
-  console.log(`${country} , ${region} , ${city} , ${host} , ${path} `);
+  console.log(
+    `${logObject.country} , ${logObject.region} , ${logObject.city} , ${logObject.host} , ${logObject.path} `
+  );
 
   res.sendStatus(200);
 });
