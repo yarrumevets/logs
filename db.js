@@ -16,7 +16,7 @@ const dbConnect = async (dbName) => {
 const db = await dbConnect("logs");
 
 const createLog = async (logObject) => {
-  logObject.currentTime = new Date().toISOString();
+  logObject.createdAt = new Date();
   console.log("log: ", logObject);
   const reqlogsCollection = db.collection("reqlogs");
   // @TOOD: add current time ?
