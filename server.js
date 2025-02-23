@@ -1,21 +1,41 @@
 import express from "express";
 import { createLog, getLogs } from "./db.js";
+import ipinfo from "ipinfo";
 
 // Server Stuff
 const app = express();
 const SERVER_PORT = process.env.PORT || 4514;
 
-// Server static files.
-app.use(express.static("public"));
-
+// Middlewre:
 app.use(express.json());
+
+// Get ipinfo
+app.use(async (req, res, next) => {
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  ipinfo(ip, (error, cLoc) => {
+    console.log("LOCATION -- cLoc: ", cLoc, " error: ", error);
+    if (error) {
+      return next(); // Fail silently or handle error appropriately
+    }
+    const locationData = { ...cLoc };
+    // Get the location data split out.
+    if (locationData.loc) {
+      const fullCoords = locationData.loc;
+      const [lat, lng] = fullCoords.split(",").map(Number);
+      locationData.coords = {
+        fullCoords,
+        lat,
+        lng,
+      };
+    }
+    req.locationData = locationData;
+    next();
+  });
+});
 
 app.use((req, res) => {
   const logObject = {
-    ip:
-      req.headers["x-real-ip"] ||
-      req.headers["x-forwarded-for"] ||
-      req.socket.remoteAddress,
+    ...req.locationData,
     host: req.headers.host,
     path: req.headers["x-original-uri"] || req.url,
     method: req.method,
@@ -26,9 +46,12 @@ app.use((req, res) => {
 
   createLog(logObject);
 
-  console.log(logObject);
+  console.log("\n" + logObject);
   res.sendStatus(200);
 });
+
+// Server static files.
+app.use(express.static("public"));
 
 // Server
 app.listen(SERVER_PORT, () => {
