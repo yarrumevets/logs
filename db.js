@@ -17,7 +17,6 @@ const db = await dbConnect("logs");
 
 const createLog = async (logObject) => {
   logObject.createdAt = new Date();
-  console.log("log: ", logObject);
   const reqlogsCollection = db.collection("reqlogs");
   // @TOOD: add current time ?
   const result = await reqlogsCollection.insertOne(logObject);
