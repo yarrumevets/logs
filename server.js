@@ -43,6 +43,9 @@ app.use((req, res) => {
     userAgent: req.headers["user-agent"],
     referer: req.headers.referer,
   };
+
+  console.log("req.body: ", req.body);
+
   if (req.body) logObject.body = req.body;
 
   console.log(
