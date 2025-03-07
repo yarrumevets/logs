@@ -1,6 +1,10 @@
 import express from "express";
-import { createLog, getLogs } from "./db.js";
+import { createLog } from "./db.js";
 import ipinfo from "ipinfo";
+
+const IP_LOCATION_CACHE_TIMEOUT = 30_000;
+
+let maxCachedIps = 0;
 
 // Server Stuff
 const app = express();
@@ -9,9 +13,27 @@ const SERVER_PORT = process.env.PORT || 4514;
 // Middlewre:
 app.use(express.json());
 
+const isEmpty = (obj) => Object.keys(obj).length === 0;
+// IP cache - this avoids repeated calls to ipinfo:
+const ipLocationCache = new Map();
+const ipLocationCacheTimeouts = {};
+const addIpLocationToCache = (ip, locationData) => {
+  ipLocationCache.set(ip, locationData);
+  ipLocationCacheTimeouts[ip] = setTimeout(() => {
+    ipLocationCache.delete(ip);
+    delete ipLocationCacheTimeouts[ip];
+  }, IP_LOCATION_CACHE_TIMEOUT);
+  console.log("IP Cache Size: ", ipLocationCache.size); // @TODO: remove this after some monitoring.
+  maxCachedIps = Math.max(maxCachedIps, ipLocationCache.size);
+};
+
 // Get ipinfo
 app.use(async (req, res, next) => {
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  if (ipLocationCache.has(ip)) {
+    req.locationData = ipLocationCache.get(ip);
+    return next();
+  }
   ipinfo(ip, (error, cLoc) => {
     if (error) {
       console.error("LOGS ERROR (ipinfo): ", error);
@@ -29,6 +51,7 @@ app.use(async (req, res, next) => {
       };
       delete locationData.loc;
     }
+    addIpLocationToCache(ip, locationData);
     req.locationData = locationData;
     next();
   });
@@ -43,17 +66,11 @@ app.use((req, res) => {
     userAgent: req.headers["user-agent"],
     referer: req.headers.referer,
   };
-
-  console.log("req.body: ", req.body);
-
-  if (req.body) logObject.body = req.body;
-
+  if (!isEmpty(req.body)) logObject.body = req.body;
   console.log(
     `${logObject.country} , ${logObject.region} , ${logObject.city} , ${logObject.host} , ${logObject.path} `
   );
-
   createLog(logObject);
-
   res.sendStatus(200);
 });
 
